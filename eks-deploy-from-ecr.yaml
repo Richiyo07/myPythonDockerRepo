@@ -1,10 +1,19 @@
+
+apiVersion: v1
+kind: Namespace
+metadata:
+  name: python-app-ns
+
+---
 apiVersion: apps/v1
 kind: Deployment
 metadata:
-  name: my-python-app-deployment
-  namespace: python-app-ns     # Namespace where the deployment will be created
+  name: python-app
+  namespace: python-app-ns
+  labels:
+    app: python-app
 spec:
-  replicas: 3
+  replicas: 2
   selector:
     matchLabels:
       app: python-app
@@ -14,29 +23,25 @@ spec:
         app: python-app
     spec:
       containers:
-      - name: my-python-app
-        image: 136356824322.dkr.ecr.us-east-2.amazonaws.com/richspace/dodo-repo:latest:${BUILD_NUMBER}
-        imagePullPolicy: Always
-        ports:
-        - containerPort: 5000
-# service type loadbalancer       
+        - name: python-app
+          image: 136356824322.dkr.ecr.us-east-2.amazonaws.com/richspace/dodo-repo:latest
+          imagePullPolicy: Always
+          ports:
+            - containerPort: 5000
+              name: http
+
 ---
 apiVersion: v1
 kind: Service
 metadata:
-  name: python-app-svc
-  namespace: python-app-ns     # Namespace where the deployment will be created
+  name: python-app-service
+  namespace: python-app-ns
 spec:
+  type: LoadBalancer
   selector:
     app: python-app
   ports:
-    - protocol: TCP
+    - name: http
       port: 80
       targetPort: 5000
-  type: ClusterIP
-
-spec:
-  containers:
-  - name: kubectl-repo-container
-    image: 136356824322.dkr.ecr.us-east-2.amazonaws.com/yohyoh/kubectl-repo:latest
-    imagePullPolicy: Always # Forces K8s to pull the new 'latest' image every time
+      protocol: TCP
